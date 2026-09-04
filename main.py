@@ -1,3 +1,9 @@
+# bibliotecas
+import datetime
+
+agora = datetime.datetime.now()
+data_hora = agora.strftime("%d/%m/%Y %H:%M")
+
 # calling t.i
 # Sistema de gerenciamento de chamados de TI
 # Desenvolvido como projeto de estudo em Python
@@ -11,19 +17,24 @@ print('               Bem-vindo!                 ')
 print(' sistema de gerenciamento de chamados técnicos.')
 print('              Versão: 0.1                 ')
 
+def formatar_texto(texto):
+    return texto.strip().lower()
+
+setores = ("TI", "RH", "Financeiro", "Administrativo")
+
+status = "Em aberto"
+contador = 1
 
 def dados_chamado():
 
-    solicitante = input('Digite seu nome: ')
-    setor = input('Digite seu setor: ')
-    problema = input('Digite o problema: ')
+    solicitante = formatar_texto(input("Digite seu nome: "))
+    setor = formatar_texto(input("Digite seu setor: "))
+    problema = formatar_texto(input("Descreva o problema: "))
+
 
     return solicitante, setor, problema
 
 solicitante, setor, problema = dados_chamado()
-
-status = "Em aberto"
-contador = 1
 
 # criando a função abrir_chamado
 def abrir_chamado(solicitante, setor, problema):
@@ -38,7 +49,8 @@ def abrir_chamado(solicitante, setor, problema):
         "status": status,
         "solicitante": solicitante,
         "setor": setor,
-        "problema": problema
+        "problema": problema,
+        "data_hora": data_hora
         }
     
     contador = contador + 1
@@ -62,6 +74,7 @@ print(f'Solicitante: {chamado["solicitante"]}')
 print(f'Setor: {chamado["setor"]}')
 print(f'Problema: {chamado["problema"]}')
 print(f'Status: {chamado["status"]}')
+print(f'Data e hora: {chamado["data_hora"]}')
 
 # 7) Lista todos os chamados cadastrados
 print('==========================================')
@@ -73,4 +86,5 @@ for chamado in chamados:
     print(f'Setor: {chamado["setor"]}')
     print(f'Problema: {chamado["problema"]}')
     print(f'Status: {chamado["status"]}')
+    print(f'Data e hora: {chamado["data_hora"]}')
     print() 
