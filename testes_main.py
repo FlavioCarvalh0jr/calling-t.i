@@ -37,6 +37,25 @@ def salvar_chamado(chamado):
     # Salva as alterações no banco de dados
     conexao.commit()  
 
+# 5) BUSCAR CHAMADOS NO BANCO
+def buscar_chamados():
+    resultado = conexao.execute("""
+        SELECT codigo, status, solicitante, setor, problema, data_hora
+        FROM chamados
+    """)
+
+    return resultado.fetchall()    
+
+
+# Busca somente os chamados do solicitante informado.
+def buscar_chamados_por_solicitante(nome):
+    resultado = conexao.execute("""
+        SELECT codigo, status, solicitante, setor, problema, data_hora
+        FROM chamados
+        WHERE solicitante = ?
+    """, (nome,))
+
+    return resultado.fetchall()
 
 
 # Captura e formata a data e a hora do início do programa.
@@ -204,20 +223,22 @@ while True:
             opcao_tecnico = input('Escolha uma opção: ')
 
             if opcao_tecnico == '1':
-                # Avisa quando ainda não há chamados nesta execução.
-                if not chamados:
+                chamados_banco = buscar_chamados()
+
+                if not chamados_banco:
                     print('Nenhum chamado cadastrado.')
 
-                # O print fica dentro do for para exibir cada chamado da lista.
-                for chamado in chamados:
+                # A consulta retorna tuplas na mesma ordem das colunas do SELECT.
+                for chamado in chamados_banco:
+                    codigo, status_chamado, solicitante, setor, problema, data_chamado = chamado
                     print('==========================================')
-                    print(f'             CHAMADO {chamado["id"]}')
+                    print(f'             CHAMADO {codigo}')
                     print('==========================================')
-                    print(f'Solicitante: {chamado["solicitante"]}')
-                    print(f'Setor: {chamado["setor"]}')
-                    print(f'Problema: {chamado["problema"]}')
-                    print(f'Status: {chamado["status"]}')
-                    print(f'Data e hora: {chamado["data_hora"]}')
+                    print(f'Solicitante: {solicitante}')
+                    print(f'Setor: {setor}')
+                    print(f'Problema: {problema}')
+                    print(f'Status: {status_chamado}')
+                    print(f'Data e hora: {data_chamado}')
 
             # Encerra o laço do técnico e retorna ao menu principal.
             elif opcao_tecnico == '2':
