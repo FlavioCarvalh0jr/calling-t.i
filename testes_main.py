@@ -18,8 +18,26 @@ conexao.execute("""
     )
 """)
 
-# Salva as alterações no banco de dados
-conexao.commit()  
+
+# 4) SALVAR CHAMADO NO BANCO
+def salvar_chamado(chamado):
+    conexao.execute("""
+        INSERT INTO chamados
+        (codigo, status, solicitante, setor, problema, data_hora)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        chamado["id"],
+        chamado["status"],
+        chamado["solicitante"],
+        chamado["setor"],
+        chamado["problema"],
+        chamado["data_hora"]
+    ))
+
+    # Salva as alterações no banco de dados
+    conexao.commit()  
+
+
 
 # Captura e formata a data e a hora do início do programa.
 agora = datetime.datetime.now()
@@ -129,6 +147,8 @@ while True:
 
                 # Adiciona o chamado à lista mantida em memória.
                 chamados.append(chamado)
+                # Salva o chamado no banco de dados.
+                salvar_chamado(chamado)
 
                 # Exibe a confirmação do cadastro e os dados do chamado criado.
                 print('==========================================')
@@ -213,7 +233,14 @@ while True:
 
     # Avisa quando a opção não corresponde a nenhuma opção do menu principal.
     else:
-        print('Opção inválida!')
+        print('Opção inválida!') 
+
+
+ # 5) CONSULTA OS CHAMADOS SALVOS NO BANCO
+resultado = conexao.execute("SELECT * FROM chamados")
+
+for chamado_banco in resultado:
+    print(chamado_banco)
 
 # 6) Exibe a confirmação do chamado registrado
 # print('==========================================')
