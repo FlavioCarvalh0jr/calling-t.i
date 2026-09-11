@@ -21,26 +21,6 @@ conexao.execute("""
 # Salva as alterações no banco de dados
 conexao.commit()  
 
-# INSERE UM CHAMADO DE TESTE
-conexao.execute("""
-    INSERT INTO chamados
-    (codigo, status, solicitante, setor, problema, data_hora)
-    VALUES (?, ?, ?, ?, ?, ?)
-""", (
-    "CALL-0001",
-    "Em aberto",
-    "Flavio",
-    "TI",
-    "Computador não liga",
-    "10/09/2026 21:30"
-))
-
-# CONSULTA OS CHAMADOS
-resultado = conexao.execute("SELECT * FROM chamados")
-
-for chamado in resultado:
-    print(chamado)
-
 # Captura e formata a data e a hora do início do programa.
 agora = datetime.datetime.now()
 data_hora = agora.strftime("%d/%m/%Y %H:%M")
