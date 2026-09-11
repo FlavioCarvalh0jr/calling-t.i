@@ -1,5 +1,62 @@
 # Importa a biblioteca usada para obter a data e a hora.
 import datetime
+import sqlite3
+
+# CONEXÃO COM O BANCO DE DADOS
+conexao = sqlite3.connect("calling.db")
+
+# CRIAÇÃO DA TABELA DE CHAMADOS
+conexao.execute("""
+    CREATE TABLE IF NOT EXISTS chamados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo TEXT,
+        status TEXT,
+        solicitante TEXT,
+        setor TEXT,
+        problema TEXT,
+        data_hora TEXT
+    )
+""")
+
+
+# 4) SALVAR CHAMADO NO BANCO
+def salvar_chamado(chamado):
+    conexao.execute("""
+        INSERT INTO chamados
+        (codigo, status, solicitante, setor, problema, data_hora)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (
+        chamado["id"],
+        chamado["status"],
+        chamado["solicitante"],
+        chamado["setor"],
+        chamado["problema"],
+        chamado["data_hora"]
+    ))
+
+    # Salva as alterações no banco de dados
+    conexao.commit()  
+
+# 5) BUSCAR CHAMADOS NO BANCO
+def buscar_chamados():
+    resultado = conexao.execute("""
+        SELECT codigo, status, solicitante, setor, problema, data_hora
+        FROM chamados
+    """)
+
+    return resultado.fetchall()    
+
+
+# Busca somente os chamados do solicitante informado.
+def buscar_chamados_por_solicitante(nome):
+    resultado = conexao.execute("""
+        SELECT codigo, status, solicitante, setor, problema, data_hora
+        FROM chamados
+        WHERE solicitante = ?
+    """, (nome,))
+
+    return resultado.fetchall()
+
 
 # Captura e formata a data e a hora do início do programa.
 agora = datetime.datetime.now()
@@ -109,6 +166,8 @@ while True:
 
                 # Adiciona o chamado à lista mantida em memória.
                 chamados.append(chamado)
+                # Salva o chamado no banco de dados.
+                salvar_chamado(chamado)
 
                 # Exibe a confirmação do cadastro e os dados do chamado criado.
                 print('==========================================')
@@ -164,20 +223,22 @@ while True:
             opcao_tecnico = input('Escolha uma opção: ')
 
             if opcao_tecnico == '1':
-                # Avisa quando ainda não há chamados nesta execução.
-                if not chamados:
+                chamados_banco = buscar_chamados()
+
+                if not chamados_banco:
                     print('Nenhum chamado cadastrado.')
 
-                # O print fica dentro do for para exibir cada chamado da lista.
-                for chamado in chamados:
+                # A consulta retorna tuplas na mesma ordem das colunas do SELECT.
+                for chamado in chamados_banco:
+                    codigo, status_chamado, solicitante, setor, problema, data_chamado = chamado
                     print('==========================================')
-                    print(f'             CHAMADO {chamado["id"]}')
+                    print(f'             CHAMADO {codigo}')
                     print('==========================================')
-                    print(f'Solicitante: {chamado["solicitante"]}')
-                    print(f'Setor: {chamado["setor"]}')
-                    print(f'Problema: {chamado["problema"]}')
-                    print(f'Status: {chamado["status"]}')
-                    print(f'Data e hora: {chamado["data_hora"]}')
+                    print(f'Solicitante: {solicitante}')
+                    print(f'Setor: {setor}')
+                    print(f'Problema: {problema}')
+                    print(f'Status: {status_chamado}')
+                    print(f'Data e hora: {data_chamado}')
 
             # Encerra o laço do técnico e retorna ao menu principal.
             elif opcao_tecnico == '2':
@@ -193,7 +254,14 @@ while True:
 
     # Avisa quando a opção não corresponde a nenhuma opção do menu principal.
     else:
-        print('Opção inválida!')
+        print('Opção inválida!') 
+
+
+ # 5) CONSULTA OS CHAMADOS SALVOS NO BANCO
+resultado = conexao.execute("SELECT * FROM chamados")
+
+for chamado_banco in resultado:
+    print(chamado_banco)
 
 # 6) Exibe a confirmação do chamado registrado
 # print('==========================================')
