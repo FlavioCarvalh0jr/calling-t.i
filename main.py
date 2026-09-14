@@ -80,8 +80,6 @@ print('              Versão: 0.1                 ')
 def formatar_texto(texto):
     return texto.strip().lower()
 
-# Define os setores do sistema; essa tupla ainda não é usada para validar a entrada.
-setores = ("TI", "RH", "Financeiro", "Administrativo")
 
 # Define o status inicial dos chamados e o contador usado para gerar seus IDs.
 status = "Em aberto"
@@ -254,34 +252,4 @@ while True:
 
     # Avisa quando a opção não corresponde a nenhuma opção do menu principal.
     else:
-        print('Opção inválida!') 
-
-
- # 5) CONSULTA OS CHAMADOS SALVOS NO BANCO
-resultado = conexao.execute("SELECT * FROM chamados")
-
-for chamado_banco in resultado:
-    print(chamado_banco)
-
-# 6) Exibe a confirmação do chamado registrado
-# print('==========================================')
-#print('            CHAMADO REGISTRADO            ')
-#print('==========================================') 
-#print(f'ID do chamado: {chamado["id"]}')
-#print(f'Solicitante: {chamado["solicitante"]}')
-#print(f'Setor: {chamado["setor"]}')
-#print(f'Problema: {chamado["problema"]}')
-#print(f'Status: {chamado["status"]}')
-#print(f'Data e hora: {chamado["data_hora"]}')
-
-# 7) Lista todos os chamados cadastrados
-#print('==========================================')
-#print('          CHAMADOS CADASTRADOS            ')
-#print('==========================================')
-#for chamado in chamados:
-#    print(f'Solicitante: {chamado["solicitante"]}')
-#    print(f'Setor: {chamado["setor"]}')
-#    print(f'Problema: {chamado["problema"]}')
-#    print(f'Status: {chamado["status"]}')
-#    print(f'Data e hora: {chamado["data_hora"]}')
-#    print() 
+        print('Opção inválida!')
