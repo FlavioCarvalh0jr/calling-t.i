@@ -21,21 +21,29 @@ conexao.execute("""
 
 # 4) SALVAR CHAMADO NO BANCO
 def salvar_chamado(chamado):
-    conexao.execute("""
-        INSERT INTO chamados
-        (codigo, status, solicitante, setor, problema, data_hora)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        chamado["id"],
-        chamado["status"],
-        chamado["solicitante"],
-        chamado["setor"],
-        chamado["problema"],
-        chamado["data_hora"]
-    ))
+    # A transacao salva o registro e seu codigo juntos.
+    with conexao:
+        resultado = conexao.execute("""
+            INSERT INTO chamados
+            (status, solicitante, setor, problema, data_hora)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            chamado["status"],
+            chamado["solicitante"],
+            chamado["setor"],
+            chamado["problema"],
+            chamado["data_hora"]
+        ))
 
-    # Salva as alterações no banco de dados
-    conexao.commit()  
+        # lastrowid e o ID gerado pelo SQLite para este registro.
+        codigo = f"CALL-{resultado.lastrowid:04d}"
+        conexao.execute(
+            "UPDATE chamados SET codigo = ? WHERE id = ?",
+            (codigo, resultado.lastrowid)
+        )
+
+    # Atualiza o dicionario somente depois de confirmar a gravacao.
+    chamado["id"] = codigo
 
 # 5) BUSCAR CHAMADOS NO BANCO
 def buscar_chamados():
@@ -58,10 +66,6 @@ def buscar_chamados_por_solicitante(nome):
     return resultado.fetchall()
 
 
-# Captura e formata a data e a hora do início do programa.
-agora = datetime.datetime.now()
-data_hora = agora.strftime("%d/%m/%Y %H:%M")
-
 # calling t.i
 # Sistema de gerenciamento de chamados de TI
 # Desenvolvido como projeto de estudo em Python
@@ -81,32 +85,35 @@ def formatar_texto(texto):
     return texto.strip().lower()
 
 
-# Define o status inicial dos chamados e o contador usado para gerar seus IDs.
+# Define o status inicial dos chamados.
 status = "Em aberto"
-contador = 1
 
-# Solicita os dados do chamado, formata os textos e devolve os três valores.
+# Repete a pergunta até receber um texto preenchido.
+def ler_campo_obrigatorio(pergunta):
+    while True:
+        texto = formatar_texto(input(pergunta))
+        if texto:
+            return texto
+        print('Este campo é obrigatório. Digite um valor para continuar.')
+
+
+# Solicita e valida os três campos antes de criar o chamado.
 def dados_chamado():
-
-    solicitante = formatar_texto(input("Digite seu nome: "))
-    setor = formatar_texto(input("Digite seu setor: "))
-    problema = formatar_texto(input("Descreva o problema: "))
-
+    solicitante = ler_campo_obrigatorio("Digite seu nome: ")
+    setor = ler_campo_obrigatorio("Digite seu setor: ")
+    problema = ler_campo_obrigatorio("Descreva o problema: ")
 
     return solicitante, setor, problema
 
+
 # Cria um chamado com os dados recebidos e devolve seu dicionário.
 def abrir_chamado(solicitante, setor, problema):
-
-    # Permite que a função atualize o contador definido fora dela.
-    global contador
-
-    # Monta o identificador do chamado usando o contador atual.
-    id_chamado = f'CALL-000{contador}'
+    # Captura a data e a hora a cada novo chamado.
+    agora = datetime.datetime.now()
+    data_hora = agora.strftime("%d/%m/%Y %H:%M")
 
     # Reúne os dados de um chamado em um dicionário.
     chamado = {
-        "id": id_chamado,
         "status": status,
         "solicitante": solicitante,
         "setor": setor,
@@ -114,9 +121,6 @@ def abrir_chamado(solicitante, setor, problema):
         "data_hora": data_hora
         }
     
-    # Prepara o contador para o próximo chamado.
-    contador = contador + 1
-
     return chamado 
 
 # Cria a lista que guarda os chamados durante a execução do programa.
@@ -162,10 +166,9 @@ while True:
                 # Cria o dicionário do chamado com os dados coletados.
                 chamado = abrir_chamado(solicitante, setor, problema)
 
-                # Adiciona o chamado à lista mantida em memória.
-                chamados.append(chamado)
-                # Salva o chamado no banco de dados.
+                # Salva e recebe o codigo gerado a partir do ID do SQLite.
                 salvar_chamado(chamado)
+                chamados.append(chamado)
 
                 # Exibe a confirmação do cadastro e os dados do chamado criado.
                 print('==========================================')
@@ -182,23 +185,21 @@ while True:
             elif opcao_usuario == '2':
                 # Formata o nome da mesma maneira usada no cadastro para comparar os textos.
                 nome = formatar_texto(input('Digite seu nome: '))
-                encontrado = False
+                # Consulta o SQLite, incluindo chamados de execuções anteriores.
+                chamados_usuario = buscar_chamados_por_solicitante(nome)
 
-                # Percorre a lista inteira, colocando um dicionário por vez na variável chamado.
-                for chamado in chamados:
-                    # Compara o solicitante deste chamado com o nome digitado.
-                    if chamado["solicitante"] == nome:
-                        encontrado = True
-                        # Exibe os dados somente dos chamados que correspondem ao nome.
-                        print(f'ID do chamado: {chamado["id"]}')
-                        print(f'Solicitante: {chamado["solicitante"]}')
-                        print(f'Setor: {chamado["setor"]}')
-                        print(f'Problema: {chamado["problema"]}')
-                        print(f'Status: {chamado["status"]}')
-                        print(f'Data e hora: {chamado["data_hora"]}')
-                # Avisa quando não há nenhum chamado registrado para o nome informado.
-                if not encontrado:
-                    print('Usuário não encontrado.')
+                # A consulta retorna tuplas na mesma ordem das colunas do SELECT.
+                for chamado in chamados_usuario:
+                    codigo, status_chamado, solicitante, setor, problema, data_chamado = chamado
+                    print(f'ID do chamado: {codigo}')
+                    print(f'Solicitante: {solicitante}')
+                    print(f'Setor: {setor}')
+                    print(f'Problema: {problema}')
+                    print(f'Status: {status_chamado}')
+                    print(f'Data e hora: {data_chamado}')
+
+                if not chamados_usuario:
+                    print('Nenhum chamado encontrado para este solicitante.')
 
             # Encerra o laço do menu do usuário e retorna ao menu principal.
             elif opcao_usuario == '3':
