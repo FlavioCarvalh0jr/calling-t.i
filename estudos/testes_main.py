@@ -1,3 +1,7 @@
+# calling t.i
+# Sistema de gerenciamento de chamados de TI
+# Desenvolvido como projeto de estudo em Python
+
 # Importa a biblioteca usada para obter a data e a hora.
 import datetime
 import sqlite3
@@ -62,10 +66,6 @@ def buscar_chamados_por_solicitante(nome):
 agora = datetime.datetime.now()
 data_hora = agora.strftime("%d/%m/%Y %H:%M")
 
-# calling t.i
-# Sistema de gerenciamento de chamados de TI
-# Desenvolvido como projeto de estudo em Python
-
 # Exibe a apresentação do sistema e a mensagem de boas-vindas.
 print('==========================================')
 print('               CALLING T.I                ')
@@ -79,7 +79,6 @@ print('              Versão: 0.1                 ')
 # Remove espaços das extremidades do texto e converte as letras para minúsculas.
 def formatar_texto(texto):
     return texto.strip().lower()
-
 
 # Define o status inicial dos chamados e o contador usado para gerar seus IDs.
 status = "Em aberto"

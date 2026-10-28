@@ -1,9 +1,11 @@
 # Importa a biblioteca usada para obter a data e a hora.
 import datetime
 import sqlite3
+from pathlib import Path
 
 # CONEXÃO COM O BANCO DE DADOS
-conexao = sqlite3.connect("calling.db")
+caminho_banco = Path(__file__).resolve().parent / 'calling.db'
+conexao = sqlite3.connect(caminho_banco)
 
 # CRIAÇÃO DA TABELA DE CHAMADOS
 conexao.execute("""
@@ -64,6 +66,53 @@ def buscar_chamados_por_solicitante(nome):
     """, (nome,))
 
     return resultado.fetchall()
+
+
+# Opções permitidas para o atendimento.
+STATUS_CHAMADOS = ("Em aberto", "Em atendimento", "Concluído")
+
+
+def atualizar_status_chamado(id_chamado, novo_status):
+    if novo_status not in STATUS_CHAMADOS:
+        raise ValueError("Status inválido.")
+    with conexao:
+        resultado = conexao.execute(
+            "UPDATE chamados SET status = ? WHERE id = ?",
+            (novo_status, id_chamado)
+        )
+    return resultado.rowcount == 1
+
+
+def menu_atualizar_status():
+    codigo = input('Digite o código do chamado: ').strip().upper()
+    resultados = conexao.execute(
+        "SELECT id, status FROM chamados WHERE codigo = ?", (codigo,)
+    ).fetchall()
+    if not resultados:
+        print('Chamado não encontrado.')
+        return
+    if len(resultados) > 1:
+        print('Código duplicado no banco. Corrija os registros antes de atualizar.')
+        return
+
+    id_chamado, status_atual = resultados[0]
+    print(f'Status atual: {status_atual}')
+    while True:
+        for numero, nome_status in enumerate(STATUS_CHAMADOS, start=1):
+            print(f'{numero} - {nome_status}')
+        print('0 - Cancelar')
+        opcao_status = input('Escolha o novo status: ').strip()
+        if opcao_status == '0':
+            return
+        if opcao_status not in ('1', '2', '3'):
+            print('Opção inválida!')
+            continue
+        novo_status = STATUS_CHAMADOS[int(opcao_status) - 1]
+        if atualizar_status_chamado(id_chamado, novo_status):
+            print(f'Status do chamado {codigo} atualizado para: {novo_status}')
+        else:
+            print('Chamado não encontrado.')
+        return
 
 
 # calling t.i
@@ -218,6 +267,7 @@ while True:
             print('==========================================')
             print('1 - Ver chamados')
             print('2 - Voltar')
+            print('3 - Atualizar status')
 
             opcao_tecnico = input('Escolha uma opção: ')
 
@@ -238,6 +288,9 @@ while True:
                     print(f'Problema: {problema}')
                     print(f'Status: {status_chamado}')
                     print(f'Data e hora: {data_chamado}')
+
+            elif opcao_tecnico == '3':
+                menu_atualizar_status()
 
             # Encerra o laço do técnico e retorna ao menu principal.
             elif opcao_tecnico == '2':
